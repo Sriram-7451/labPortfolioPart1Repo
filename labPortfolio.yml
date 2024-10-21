@@ -12,5 +12,20 @@ Resources:
         - Key: Name
           Value: FridayHITT-vpc
 
+  #Public EC2 Instance block
+  FridayHITTPublicInstance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      KeyName: FridayHITT_Sriram-1
+      ImageId: ami-00385a401487aefa4
+
+  #Private EC2 Instance block
+  FridayHITTPrivateInstance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      KeyName: FridayHITT_Sriram-1
+      ImageId: ami-00385a401487aefa4    
 
 
