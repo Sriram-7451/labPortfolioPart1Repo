@@ -1,0 +1,16 @@
+Description: A VPC Cloudformation template containing EC2, Pubic/Private Subnets, Gateway and Security Groups
+
+Resources:
+  #VPC block
+  FridayHITTVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: FridayHITT-vpc
+
+
+
