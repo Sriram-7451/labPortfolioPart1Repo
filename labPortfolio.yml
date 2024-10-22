@@ -1,16 +1,59 @@
-Description: A VPC Cloudformation template containing EC2, Pubic/Private Subnets, Gateway and Security Groups
+Description: A VPC Cloudformation template containing EC2, Pubic/Private Subnets, Internet Gateway and Security Groups
+
+Parameters:
+  FridayHITTVPCCIDR:
+    Description: IP range associated with the VPC for the FridayHITT company
+    Type: String
+    Default: 10.0.0.0/16
 
 Resources:
   #VPC block
   FridayHITTVPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: !Ref FridayHITTVPCCIDR
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: Name
           Value: FridayHITT-vpc
+
+  #Internet Gateway block
+  FridayHITTVPCInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: FridayHITT-IGW
+
+  AttachFridayHITTVPCInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      InternetGatewayId: !Ref FridayHITTVPCInternetGateway 
+
+  #Public subnet block
+  FridayHITTVPCPublicSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: FridayHITT-vpc-Public-Subnet
+
+  #Private Subnet block
+  FridayHITTVPCPrivateSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: FridayHITT-vpc-Private-Subnet
 
   #Public EC2 Instance block
   FridayHITTPublicInstance:
