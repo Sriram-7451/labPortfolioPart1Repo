@@ -54,6 +54,39 @@ Resources:
       Tags:
         - Key: Name
           Value: FridayHITT-vpc-Private-Subnet
+  
+  #Public Subnet Security groups
+  FridayHITTPublicEC2PublicSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      GroupDescription: "Public Security Group allowing SSH, HTTP and HTTPS"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          # CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+  
+  #Private Subnet Security groups        
+  FridayHITTPrivateEC2PrivateSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      GroupDescription: "Public Security Group allowing only SSH"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          # CidrIp: 0.0.0.0/0     
+        
 
   #Public EC2 Instance block
   FridayHITTPublicInstance:
