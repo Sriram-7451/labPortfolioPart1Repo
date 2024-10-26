@@ -7,7 +7,7 @@ Parameters:
     Default: 10.0.0.0/16
 
 Resources:
-  #VPC block
+  # VPC block
   FridayHITTVPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -18,7 +18,7 @@ Resources:
         - Key: Name
           Value: FridayHITT-vpc
 
-  #Internet Gateway block
+  # Internet Gateway block
   FridayHITTVPCInternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -32,9 +32,9 @@ Resources:
       VpcId: !Ref FridayHITTVPC
       InternetGatewayId: !Ref FridayHITTVPCInternetGateway 
 
-  #Public subnet block
+  # Public subnet block
   FridayHITTVPCPublicSubnet:
-    Type: 'AWS::EC2::Subnet'
+    Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref FridayHITTVPC
       CidrBlock: 10.0.1.0/24
@@ -44,9 +44,9 @@ Resources:
         - Key: Name
           Value: FridayHITT-vpc-Public-Subnet
 
-  #Private Subnet block
+  # Private Subnet block
   FridayHITTVPCPrivateSubnet:
-    Type: 'AWS::EC2::Subnet'
+    Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref FridayHITTVPC
       CidrBlock: 10.0.2.0/24
@@ -54,30 +54,10 @@ Resources:
       Tags:
         - Key: Name
           Value: FridayHITT-vpc-Private-Subnet
-  
-  #Public Subnet Security groups
-  FridayHITTPublicEC2PublicSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    Properties:
-      VpcId: !Ref FridayHITTVPC
-      GroupDescription: "Public Security Group allowing SSH, HTTP and HTTPS"
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          # CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-  
-  #Private Subnet Security groups        
-  FridayHITTPrivateEC2PrivateSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
+
+  # JumpBox Security Group
+  FridayHITTJumpBoxEC2PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref FridayHITTVPC
       GroupDescription: "Public Security Group allowing only SSH"
@@ -85,25 +65,113 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          # CidrIp: 0.0.0.0/0     
-        
+          CidrIp: 0.0.0.0/0        
+  
+  # Public Subnet Security Group
+  FridayHITTPublicEC2PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      GroupDescription: "Public Security Group allowing SSH, HTTP, and HTTPS"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref FridayHITTJumpBoxEC2PublicSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0      
 
-  #Public EC2 Instance block
-  FridayHITTPublicInstance:
-    Type: 'AWS::EC2::Instance'
+  # Private Subnet Security Group        
+  FridayHITTPrivateEC2PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      GroupDescription: "Private Security Group allowing only SSH from JumpBox"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref FridayHITTJumpBoxEC2PublicSecurityGroup
+
+  # Public Subnet Route Table
+  FridayHITTPublicEC2RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      Tags:
+        - Key: Name
+          Value: FridayHITT-publicroutetable
+
+  FridayHITTDefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachFridayHITTVPCInternetGateway
+    Properties:
+      RouteTableId: !Ref FridayHITTPublicEC2RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref FridayHITTVPCInternetGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FridayHITTPublicEC2RouteTable
+      SubnetId: !Ref FridayHITTVPCPublicSubnet
+
+  # Private Subnet Route Table
+  FridayHITTPrivateEC2RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FridayHITTPrivateEC2RouteTable
+      SubnetId: !Ref FridayHITTVPCPrivateSubnet    
+
+  # Jumpbox Instance block
+  FridayHITTJumpBoxEC2Instance:
+    Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
       KeyName: FridayHITT_Sriram-1
       ImageId: ami-00385a401487aefa4
       SubnetId: !Ref FridayHITTVPCPublicSubnet
+      SecurityGroupIds: 
+        - !Ref FridayHITTJumpBoxEC2PublicSecurityGroup
+      Tags:
+        - Key: Name
+          Value: FridayHITT-JumpBox
 
-  #Private EC2 Instance block
-  FridayHITTPrivateInstance:
-    Type: 'AWS::EC2::Instance'
+  # Public EC2 Instance block
+  FridayHITTPublicInstance:
+    Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
       KeyName: FridayHITT_Sriram-1
       ImageId: ami-00385a401487aefa4
-      SubnetId: !Ref FridayHITTVPCPrivateSubnet    
+      SubnetId: !Ref FridayHITTVPCPublicSubnet
+      SecurityGroupIds: 
+        - !Ref FridayHITTPublicEC2PublicSecurityGroup
+      Tags:
+        - Key: Name
+          Value: FridayHITT-PublicInstance
 
-
+  # Private EC2 Instance block
+  FridayHITTPrivateInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: FridayHITT_Sriram-1
+      ImageId: ami-00385a401487aefa4
+      SubnetId: !Ref FridayHITTVPCPrivateSubnet
+      SecurityGroupIds: 
+        - !Ref FridayHITTPrivateEC2PrivateSecurityGroup
+      Tags:
+        - Key: Name
+          Value: FridayHITT-PrivateInstance
