@@ -167,7 +167,7 @@ Resources:
     Properties:
       RouteTableId: !Ref FridayHITTPublicEC2RouteTable
       SubnetId: !Ref FridayHITTVPCPublicSubnet
-      
+
     #Public Route definition
   FridayHITTPrivateEC2RouteTable:
     Type: AWS::EC2::RouteTable
@@ -219,3 +219,41 @@ Resources:
       Tags:
         - Key: Name
           Value: FridayHITT-PrivateInstance
+
+Outputs:
+  VPCID:
+    Description: VPC ID
+    Value: !Ref FridayHITTVPC
+   
+  PublicInstanceIP:
+    Description: Public Instance IP Address
+    Value: !GetAtt FridayHITTPublicInstance.PublicIp
+ 
+  PrivateInstanceIP:
+    Description: Private Instance IP Address
+    Value: !GetAtt FridayHITTPrivateInstance.PrivateIp
+ 
+  JumpboxInstanceIP:
+    Description: Jumpbox Instance IP Address
+    Value: !GetAtt FridayHITTJumpBoxEC2Instance.PublicIp
+ 
+  PublicSubnet1ID:
+    Description: Public Subnet ID
+    Value: !Ref FridayHITTVPCPublicSubnet
+ 
+  PrivateSubnet1ID:
+    Description: Private Subnet ID
+    Value: !Ref FridayHITTVPCPrivateSubnet
+ 
+  JumpboxSGID:
+    Description: Jumpbox Security Group ID
+    Value: !Ref FridayHITTJumpBoxEC2PublicSecurityGroup
+ 
+  PublicSGID:
+    Description: Public Security Group ID
+    Value: !Ref FridayHITTJumpBoxEC2PublicSecurityGroup
+ 
+  PrivateSGID:
+    Description: Private Security Group ID
+    Value: !Ref FridayHITTPrivateEC2PrivateSecurityGroup
+           
