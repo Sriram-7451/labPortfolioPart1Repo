@@ -6,6 +6,49 @@ Parameters:
     Type: String
     Default: 10.0.0.0/16
 
+  PublicSubnetCIDR:
+    Description: IP range for the Public Subnet
+    Type: String
+    Default: 10.0.1.0/24
+
+  PrivateSubnetCIDR:
+    Description: IP range for the Private Subnet
+    Type: String
+    Default: 10.0.2.0/24
+
+  AvailabilityZone:
+    Description: Availability Zone for the subnets
+    Type: AWS::EC2::AvailabilityZone::Name
+    ConstraintDescription: Specify an available Availability Zone
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+      - t3.small
+      - t3.medium
+
+  KeyName:
+    Description: Name of an existing EC2 KeyPair for SSH access
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+
+Mappings:
+  RegionMap:
+    eu-west-1:
+      AMI: ami-00385a401487aefa4
+    eu-west-2:
+      AMI: ami-0acc77abdfc7ed5a6
+    eu-west-3:
+      AMI: ami-00d81861317c2cc1f
+    eu-central-1:
+      AMI: ami-08ec94f928cf25a9d  
+    eu-north-1:
+      AMI: ami-02db68a01488594c5      
+
 Resources:
   # VPC block
   FridayHITTVPC:
@@ -32,14 +75,14 @@ Resources:
       VpcId: !Ref FridayHITTVPC
       InternetGatewayId: !Ref FridayHITTVPCInternetGateway 
 
-  # Public subnet block
+  # Public Subnet block
   FridayHITTVPCPublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref FridayHITTVPC
-      CidrBlock: 10.0.1.0/24
+      CidrBlock: !Ref PublicSubnetCIDR
       MapPublicIpOnLaunch: true
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      AvailabilityZone: !Ref AvailabilityZone
       Tags:
         - Key: Name
           Value: FridayHITT-vpc-Public-Subnet
@@ -49,13 +92,13 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref FridayHITTVPC
-      CidrBlock: 10.0.2.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PrivateSubnetCIDR
+      AvailabilityZone: !Ref AvailabilityZone
       Tags:
         - Key: Name
           Value: FridayHITT-vpc-Private-Subnet
 
-  # JumpBox Security Group
+  # Security Groups
   FridayHITTJumpBoxEC2PublicSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -66,8 +109,7 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0        
-  
-  # Public Subnet Security Group
+
   FridayHITTPublicEC2PublicSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -87,7 +129,6 @@ Resources:
           ToPort: 443
           CidrIp: 0.0.0.0/0      
 
-  # Private Subnet Security Group        
   FridayHITTPrivateEC2PrivateSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -99,7 +140,7 @@ Resources:
           ToPort: 22
           SourceSecurityGroupId: !Ref FridayHITTJumpBoxEC2PublicSecurityGroup
 
-  # Public Subnet Route Table
+  # Route Tables
   FridayHITTPublicEC2RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -122,7 +163,6 @@ Resources:
       RouteTableId: !Ref FridayHITTPublicEC2RouteTable
       SubnetId: !Ref FridayHITTVPCPublicSubnet
 
-  # Private Subnet Route Table
   FridayHITTPrivateEC2RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -134,13 +174,13 @@ Resources:
       RouteTableId: !Ref FridayHITTPrivateEC2RouteTable
       SubnetId: !Ref FridayHITTVPCPrivateSubnet    
 
-  # Jumpbox Instance block
+  # EC2 Instances
   FridayHITTJumpBoxEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t2.micro
-      KeyName: FridayHITT_Sriram-1
-      ImageId: ami-00385a401487aefa4
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', AMI]
       SubnetId: !Ref FridayHITTVPCPublicSubnet
       SecurityGroupIds: 
         - !Ref FridayHITTJumpBoxEC2PublicSecurityGroup
@@ -148,13 +188,12 @@ Resources:
         - Key: Name
           Value: FridayHITT-JumpBox
 
-  # Public EC2 Instance block
   FridayHITTPublicInstance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t2.micro
-      KeyName: FridayHITT_Sriram-1
-      ImageId: ami-00385a401487aefa4
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', AMI]
       SubnetId: !Ref FridayHITTVPCPublicSubnet
       SecurityGroupIds: 
         - !Ref FridayHITTPublicEC2PublicSecurityGroup
@@ -162,13 +201,12 @@ Resources:
         - Key: Name
           Value: FridayHITT-PublicInstance
 
-  # Private EC2 Instance block
   FridayHITTPrivateInstance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t2.micro
-      KeyName: FridayHITT_Sriram-1
-      ImageId: ami-00385a401487aefa4
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', AMI]
       SubnetId: !Ref FridayHITTVPCPrivateSubnet
       SecurityGroupIds: 
         - !Ref FridayHITTPrivateEC2PrivateSecurityGroup
