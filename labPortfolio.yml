@@ -36,6 +36,8 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     ConstraintDescription: Must be the name of an existing EC2 KeyPair.
 
+#----------------------------Adding break for parameters---------------------------------------------
+
 Mappings:
   RegionMap:
     eu-west-1:
@@ -47,7 +49,9 @@ Mappings:
     eu-central-1:
       AMI: ami-08ec94f928cf25a9d  
     eu-north-1:
-      AMI: ami-02db68a01488594c5      
+      AMI: ami-02db68a01488594c5    
+
+#----------------------------Adding break for Mapping-------------------------------------------------
 
 Resources:
   # VPC block
@@ -141,6 +145,7 @@ Resources:
           SourceSecurityGroupId: !Ref FridayHITTJumpBoxEC2PublicSecurityGroup
 
   # Route Tables
+    #Public Route definition
   FridayHITTPublicEC2RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -162,7 +167,8 @@ Resources:
     Properties:
       RouteTableId: !Ref FridayHITTPublicEC2RouteTable
       SubnetId: !Ref FridayHITTVPCPublicSubnet
-
+      
+    #Public Route definition
   FridayHITTPrivateEC2RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
